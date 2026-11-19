@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>DualStampCamera</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="cam">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+  <symbol id="i-type" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14M2 6h14a2 2 0 0 1 2 2v14"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+</svg>
+
+<!-- ============ KAMERA ============ -->
+<section class="page active" id="p-camera">
+  <canvas id="stamp"></canvas>
+  <div id="frame"></div>
+  <div id="focus"></div>
+
+  <header class="top">
+    <button class="icon-btn" id="btn-menu" aria-label="Menu"><svg><use href="#i-menu"/></svg></button>
+    <div class="seg" id="pv-seg">
+      <button data-pv="a" class="on">Foto A</button>
+      <button data-pv="b">Foto B</button>
+    </div>
+    <div class="chip" id="chip-gps">GPS</div>
+  </header>
+
+  <div id="perm-card" class="perm hidden">
+    <p>Izin kamera diperlukan untuk memotret.</p>
+    <button class="btn" id="btn-perm">Izinkan</button>
+  </div>
+
+  <footer class="bottom">
+    <button class="icon-btn lg" id="btn-gal" aria-label="Galeri"><svg><use href="#i-image"/></svg></button>
+    <button id="shutter" aria-label="Ambil foto"><span></span></button>
+    <button class="ratio-btn" id="btn-ratio">4:3</button>
+  </footer>
+</section>
+
+<!-- ============ PENGATURAN ============ -->
+<section class="page" id="p-a"></section>
+<section class="page" id="p-b"></section>
+
+<section class="page" id="p-gps">
+  <header class="bar"><button class="icon-btn back"><svg><use href="#i-back"/></svg></button><h1>GPS</h1></header>
+  <div class="scroll">
+    <div class="card">
+      <label class="row"><span>Aktifkan GPS</span><input type="checkbox" class="sw" id="gps-on"></label>
+    </div>
+    <div class="card">
+      <label class="field"><span>Tampilan lokasi di foto</span>
+        <select id="gps-fmt">
+          <option value="addr">Alamat (nama jalan, dll)</option>
+          <option value="coord">Koordinat saja</option>
+          <option value="both">Alamat + koordinat</option>
+        </select></label>
+      <div class="hint">Alamat butuh internet di HP saat memotret. Jika gagal, otomatis pakai koordinat.</div>
+    </div>
+    <div class="card" id="gps-live">
+      <div class="k">Status</div>
+      <div class="v" id="gps-state">-</div>
+      <div class="k">Alamat</div>
+      <div class="v" id="gps-addr">-</div>
+      <div class="k">Koordinat</div>
+      <div class="v mono" id="gps-coord">-</div>
+      <button class="btn ghost hidden" id="gps-perm">Izinkan akses lokasi</button>
+    </div>
+    <div class="card" id="gps-manual">
+      <div class="k">Lokasi manual (saat GPS OFF)</div>
+      <label class="field"><span>Alamat / nama lokasi</span><input id="m-addr" placeholder="Jl. Kasuari Utama, Tangerang"></label>
+      <label class="field"><span>Latitude</span><input id="m-lat" inputmode="decimal" placeholder="-6.27915"></label>
+      <label class="field"><span>Longitude</span><input id="m-lon" inputmode="decimal" placeholder="106.71091"></label>
+      <div class="hint" id="m-hint"></div>
+    </div>
+    <p class="note">Foto A dan B selalu memakai lokasi yang sama.</p>
+    <div class="by">by adrian</div>
+  </div>
+</section>
+
+<section class="page" id="p-delay">
+  <header class="bar"><button class="icon-btn back"><svg><use href="#i-back"/></svg></button><h1>Delay</h1></header>
+  <div class="scroll">
+    <div class="card">
+      <div class="k">Selisih waktu Foto B dari Foto A (detik)</div>
+      <div class="stepper">
+        <button id="d-minus">−</button>
+        <input id="d-val" inputmode="numeric" maxlength="4">
+        <button id="d-plus">+</button>
+      </div>
+      <div class="chips" id="d-chips"></div>
+    </div>
+    <div class="card">
+      <div class="k">Contoh</div>
+      <div class="v mono" id="d-ex">-</div>
+    </div>
+    <p class="note">Jam, menit, detik, dan tanggal diambil otomatis dari jam sistem dan tidak bisa diedit manual.</p>
+    <div class="by">by adrian</div>
+  </div>
+</section>
+
+<section class="page" id="p-ratio">
+  <header class="bar"><button class="icon-btn back"><svg><use href="#i-back"/></svg></button><h1>Rasio &amp; Resolusi</h1></header>
+  <div class="scroll">
+    <div class="card">
+      <div class="k">Rasio</div>
+      <div class="ratio-grid" id="r-grid"></div>
+    </div>
+    <div class="card">
+      <div class="k">Resolusi</div>
+      <div class="opts" id="r-res"></div>
+      <div class="hint" id="r-info"></div>
+    </div>
+    <div class="card">
+      <label class="field"><span>Kualitas JPG: <b id="q-val"></b>%</span><input type="range" id="q-rng" min="70" max="100" step="1"></label>
+    </div>
+    <p class="note">Tampilan app selalu portrait. Saat HP dimiringkan, foto otomatis tersimpan landscape dan hanya teksnya yang ikut miring. Resolusi maksimal menyesuaikan kemampuan kamera HP.</p>
+    <div class="by">by adrian</div>
+  </div>
+</section>
+
+<section class="page" id="p-guide">
+  <header class="bar"><button class="icon-btn back"><svg><use href="#i-back"/></svg></button><h1>Panduan</h1></header>
+  <div class="scroll guide">
+    <h2>Cara memotret</h2>
+    <ol>
+      <li>Buka <b>Kamera</b>, pilih <b>Foto A / Foto B</b> di atas untuk melihat preview tulisan masing-masing.</li>
+      <li>Tekan tombol shutter atau <b>tombol volume</b> (naik/turun) satu kali. Kamera mengambil <b>1 gambar</b>, lalu disimpan sebagai <b>2 file JPG</b>.</li>
+      <li>Hasil ada di galeri, folder <b>Pictures/DualStampCamera</b> (akhiran <b>_A</b> dan <b>_B</b>).</li>
+    </ol>
+    <h2>Susunan teks</h2>
+    <p>Baris atas selalu <b>tanggal + jam + zona waktu</b>, di bawahnya <b>lokasi</b>, lalu <b>teks tambahan</b> yang bisa kamu ubah.</p>
+    <h2>Pengaturan Foto A &amp; B</h2>
+    <p>Teks, font (termasuk Noto Naskh Arabic UI), ukuran, warna, ketebalan, posisi, dan background diatur terpisah. Tanggal dan jam otomatis, tidak bisa diedit.</p>
+    <h2>Delay</h2>
+    <p>Foto A memakai waktu saat gambar diambil. Foto B = waktu Foto A + delay. Contoh: A 20:15:29, delay 5 detik, B 20:15:34.</p>
+    <h2>GPS</h2>
+    <p>GPS ON: lokasi otomatis, tampil sebagai nama jalan/alamat (butuh internet di HP saat memotret) atau koordinat. GPS OFF: isi alamat dan/atau koordinat manual. Foto A dan B memakai lokasi yang sama.</p>
+    <h2>Rasio &amp; resolusi</h2>
+    <p>Tersedia 4:3, 16:9, 3:2, 1:1, 9:16, 18:9, 20:9, dan Full Frame. Resolusi <b>Standar</b> menghasilkan sisi pendek 1080 px (4:3 = 1440×1080, 16:9 = 1920×1080).</p>
+    <h2>Tips</h2>
+    <p><b>Ketuk layar</b> pada area kamera untuk fokus dan mengatur exposure di titik itu (otomatis kembali ke autofocus setelah 4 detik).</p>
+    <p>Jika GPS belum dapat sinyal, tunggu sebentar di tempat terbuka atau matikan GPS dan isi lokasi manual.</p>
+    <div class="by">by adrian</div>
+  </div>
+</section>
+
+<!-- ============ MENU ============ -->
+<div id="scrim" class="hidden"></div>
+<nav id="drawer">
+  <div class="brand"><svg><use href="#i-camera"/></svg><span>DualStampCamera</span></div>
+  <button data-go="camera"><svg><use href="#i-camera"/></svg>Kamera</button>
+  <button data-go="a"><svg><use href="#i-type"/></svg>Pengaturan Foto A</button>
+  <button data-go="b"><svg><use href="#i-type"/></svg>Pengaturan Foto B</button>
+  <button data-go="gps"><svg><use href="#i-pin"/></svg>GPS</button>
+  <button data-go="delay"><svg><use href="#i-clock"/></svg>Delay</button>
+  <button data-go="ratio"><svg><use href="#i-crop"/></svg>Rasio &amp; Resolusi</button>
+  <button data-go="gallery"><svg><use href="#i-image"/></svg>Galeri</button>
+  <button data-go="guide"><svg><use href="#i-book"/></svg>Panduan</button>
+</nav>
+
+<div id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
